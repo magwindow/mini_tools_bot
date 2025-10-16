@@ -2,11 +2,14 @@ import os
 import logging
 from dotenv import load_dotenv
 
+load_dotenv()
+
 from telegram import __version__ as TG_VER
 from telegram import ForceReply, Update
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
-load_dotenv()
+from filters.text import BadText
+from messages.words import BAD_WORDS
 
 try:
     from telegram import __version_info__
@@ -25,6 +28,13 @@ logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 
+async def clean_bad_words(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    for i in update.message.text.split(" "):
+        if i in BAD_WORDS:
+            await update.message.reply_text("Не ругайся матом в прямом эфире!")
+            await update.message.delete()
+
+
 # Define a few command handlers. These usually take the two arguments update and context.
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /start is issued."""
@@ -39,6 +49,9 @@ def main() -> None:
 
     # on different commands - answer in Telegram
     application.add_handler(CommandHandler("start", start))
+
+    # on non command i.e message
+    application.add_handler(MessageHandler(BadText() & ~filters.COMMAND, clean_bad_words))
 
     # Run the bot until the user presses Ctrl-C
     application.run_polling()
