@@ -10,7 +10,7 @@ from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandl
 
 from filters.text import BadText
 from messages.words import BAD_WORDS
-from messages import rbc_news, news_3d_news
+from messages import rbc_news, news_3d_news, exchange_rates
 
 try:
     from telegram import __version_info__
@@ -40,13 +40,17 @@ async def clean_bad_words(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Send a message when the command /start is issued."""
     user = update.effective_user
-    await update.message.reply_html(rf"Привет {user.mention_html()}!", reply_markup=ForceReply(selective=True))
+    message = (f"Привет {user.mention_html()}!\nЧтобы узнать новости, напиши в чат новости или news.\n"
+               f"Чтобы узнать курсы валют, напиши курсы валют или exchange.")
+    await update.message.reply_html(message, reply_markup=ForceReply(selective=True))
 
 
 async def health_check(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message.text and update.message.text.lower() in ("новости", "news"):
         await update.message.reply_text("\n\n".join(rbc_news.get_rbc_news()))
         await update.message.reply_text("\n\n".join(news_3d_news.get_3dnews_news()))
+    elif update.message.text and update.message.text.lower() in ("курсы валют", "exchange"):
+        await update.message.reply_text("\n\n".join(exchange_rates.get_exchange_rates()))
 
 
 def main():
