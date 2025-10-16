@@ -10,7 +10,7 @@ from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandl
 
 from filters.text import BadText
 from messages.words import BAD_WORDS
-from messages.rbc_news import get_rbc_news
+from messages import rbc_news, news_3d_news
 
 try:
     from telegram import __version_info__
@@ -44,8 +44,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def health_check(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.message.text and update.message.text.lower() == "новости":
-        await update.message.reply_text("\n".join(get_rbc_news()))
+    if update.message.text and update.message.text.lower() in ("новости", "news"):
+        await update.message.reply_text("\n\n".join(rbc_news.get_rbc_news()))
+        await update.message.reply_text("\n\n".join(news_3d_news.get_3dnews_news()))
 
 
 def main():
