@@ -10,6 +10,7 @@ from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandl
 
 from filters.text import BadText
 from messages.words import BAD_WORDS
+from messages.rbc_news import get_rbc_news
 
 try:
     from telegram import __version_info__
@@ -28,7 +29,7 @@ logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 
-async def clean_bad_words(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def clean_bad_words(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for i in update.message.text.split(" "):
         if i in BAD_WORDS:
             await update.message.reply_text("Не ругайся матом в прямом эфире!")
@@ -36,13 +37,18 @@ async def clean_bad_words(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
 
 # Define a few command handlers. These usually take the two arguments update and context.
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Send a message when the command /start is issued."""
     user = update.effective_user
     await update.message.reply_html(rf"Привет {user.mention_html()}!", reply_markup=ForceReply(selective=True))
 
 
-def main() -> None:
+async def health_check(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.message.text and update.message.text.lower() == "новости":
+        await update.message.reply_text("\n".join(get_rbc_news()))
+
+
+def main():
     """Start the bot."""
     # Create the Application and pass it your bot's token.
     application = Application.builder().token(os.getenv('BOT_TOKEN')).build()
@@ -52,6 +58,7 @@ def main() -> None:
 
     # on non command i.e message
     application.add_handler(MessageHandler(BadText() & ~filters.COMMAND, clean_bad_words))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, health_check))
 
     # Run the bot until the user presses Ctrl-C
     application.run_polling()
